@@ -7,7 +7,8 @@ import deeplake
 
 
 
-CIFAR_DATASET_URL = "https://www.cs.toronto.edu/~kriz/cifar-100-python.tar.gz"
+CIFAR100_DATASET_URL = "https://www.cs.toronto.edu/~kriz/cifar-100-python.tar.gz"
+CIFAR10_DATASET_URL = "https://www.cs.toronto.edu/~kriz/cifar-10-python.tar.gz"
 DOWNLAOD_FILENAME = "dataset.tar.gz"
 PLACS_URL = "hub://activeloop/places205"
 
