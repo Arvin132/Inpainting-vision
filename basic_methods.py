@@ -2,7 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from scipy import ndimage
 
-def nearest_neighbors(image, mask, neighborhood_size = 5):
+def nearestNeighbors(image, mask, neighborhood_size = 5):
     result = image.copy()
     imgW, imgH = image.shape
 
@@ -28,7 +28,7 @@ def nearest_neighbors(image, mask, neighborhood_size = 5):
 
 ### GAUSSIAN
 
-def gaussian_inpaint(img, mask, sigma=15, radius = 20):
+def gaussianInpaint(img, mask, sigma=15, radius = 20):
     result = img.copy()
 
     blurred = ndimage.gaussian_filter(result, sigma=sigma, radius=20)
