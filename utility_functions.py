@@ -157,6 +157,29 @@ class RectanglePatch(object):
     res = Image.fromarray(new_img) 
 
     return (res, target)
+  
+
+
+class CrossPatch(object):
+  def __init__(self, patch_size):
+    self.patch_size = patch_size
+
+  def __call__(self, pair):
+    img, target = pair
+
+    new_img = np.array(img)
+
+    iW, iH,_ = new_img.shape
+    x = 10
+
+    for i in range(20, iW-20):
+        x += 1
+        new_img[i,x:x + self.patch_size] = 255
+        new_img[-i, x: x + self.patch_size] = 255
+
+    res = Image.fromarray(new_img) 
+
+    return res, target
 
   
 class PairToTensors(object):
