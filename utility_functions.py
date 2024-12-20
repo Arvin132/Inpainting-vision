@@ -8,33 +8,29 @@ import torchvision.transforms.functional as tF
 import random
 from PIL import Image
 
-
-def temp(img):
-    return 5
-
 def thinXMask(img):
-    thinMask = np.zeros(img.shape)
+    thinMask = np.full(img.shape, fill_value=255)
 
     iW, iH = img.shape
     x = 10
 
     for i in range(20, iW-20):
         x += 1
-        thinMask[i,x:x+2] = 1
-        thinMask[-i, x: x+2] = 1
+        thinMask[i,x:x+2] = 0
+        thinMask[-i, x: x+2] = 0
 
     return thinMask
 
 def thickXMask(img):
-    thickMask = np.zeros(img.shape)
+    thickMask = np.full(img.shape, fill_value=255)
 
     iW, iH = img.shape
     x = 10
 
     for i in range(20, iW-20):
         x += 1
-        thickMask[i,x:x+10] = 1
-        thickMask[-i, x: x+10] = 1
+        thickMask[i,x:x+10] = 0
+        thickMask[-i, x: x+10] = 0
 
     return thickMask
 
@@ -83,7 +79,7 @@ class RandomVFlip(object):
 class PairColorJitter(object):
 
     def __call__(self, pair):
-        img, target = pair
+        img, mask = pair
 
         brightness = random.uniform(0.2, 1.8)
         contrast = random.uniform(0.2, 1.8)
@@ -95,12 +91,7 @@ class PairColorJitter(object):
         img = tF.adjust_saturation(img, saturation)
         img = tF.adjust_hue(img, hue)
 
-        target = tF.adjust_brightness(target, brightness)
-        target = tF.adjust_contrast(target, contrast)
-        target = tF.adjust_saturation(target, saturation)
-        target = tF.adjust_hue(target, hue)
-
-        return img, target
+        return img, mask
 
 
 # NOT CURRENTLY USED
@@ -129,7 +120,7 @@ class RandomResizeCrop(object):
         
 class MakePair(object):
   def __call__(self, img):
-    target = img.copy()
+    target = np.full_like(img, fill_value=255)
 
     return  Image.fromarray(img), Image.fromarray(target) 
 
@@ -159,27 +150,51 @@ class RectanglePatch(object):
     return (res, target)
   
 
+class RectanglePatch_Location(object):
+  def __init__(self, patch_size, patch_loc):
+      self.patch_size = patch_size
+      self.patch_loc = patch_loc
+
+  def __call__(self, pair):
+    img, patch = pair
+
+    patch = np.array(patch)
+    patchW, patchH = self.patch_size
+    x, y = self.patch_loc
+    patch[x: x + patchW, y: y + patchH] = 0
+
+    resPatch = Image.fromarray(patch) 
+
+    return (img, resPatch)
+
+def get_rectangle_mask(img, patch_loc, patch_size): 
+    retval = np.full_like(img, fill_value=255)
+    x, y = patch_loc
+    sx, sy = patch_size
+    retval[x: x+sx, y:y+sy, :] = 0 
+    return retval
+
 
 class CrossPatch(object):
   def __init__(self, patch_size):
     self.patch_size = patch_size
 
   def __call__(self, pair):
-    img, target = pair
+    img, patch = pair
 
-    new_img = np.array(img)
+    patch = np.array(patch)
 
-    iW, iH,_ = new_img.shape
+    iW, iH,_ = patch.shape
     x = 10
 
     for i in range(20, iW-20):
         x += 1
-        new_img[i,x:x + self.patch_size] = 255
-        new_img[-i, x: x + self.patch_size] = 255
+        patch[i,x:x + self.patch_size] = 0
+        patch[-i, x: x + self.patch_size] = 0
 
-    res = Image.fromarray(new_img) 
+    resPatch = Image.fromarray(patch) 
 
-    return res, target
+    return img, resPatch
 
   
 class PairToTensors(object):
@@ -198,3 +213,6 @@ class PairNormalize(object):
         tensor, target = pair
         return (tF.normalize(tensor, self.mean, self.std), tF.normalize(target, self.mean, self.std))
 
+
+def torch_image_to_numpy(img): 
+    return img.permute(1, 2, 0).cpu().detach().numpy() 
